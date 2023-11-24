@@ -1,0 +1,13 @@
+{ "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "bun run --watch server/src/index.ts",
+    "pro": "bun run server/src/index.ts",
+    "prebuild": "npm install"
+  },"name": "server",
+  "version": "1.0.50",
+  "devDependencies": {
+    "bun-types": "latest"
+  },
+  "module": "src/index.js",
+    
+  "dependencies": { "@elysiajs/cors": "^0.7.1", "@sendgrid/mail": "^7.7.0", "bcrypt": "^5.1.1", "dotenv": "^16.3.1", "elysia": "^0.7.17", "ioredis": "^5.3.2", "jose": "^5.0.1", "jsonwebtoken": "^9.0.2", "resend": "^2.0.0" } }
