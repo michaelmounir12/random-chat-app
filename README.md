@@ -1,140 +1,60 @@
-# Server Documentation
+# Random Chat App (Node + Express + Socket.IO + React Native)
 
-## Tech Stack
+A random chat app with queue-based pairing, dark theme UI, and on-device message storage using SQLite.
 
-- **Bun**: JavaScript runtime and toolkit
-- **Elysia.js**: Web framework for Bun
-- **SQLite**: Database (via Bun:sqlite)
-- **Jose**: JWT implementation for authentication
-- **SendGrid**: Email service for password reset
+## Features
+- Queue-based pairing with timeouts and partner disconnect notifications
+- Node.js server using Express + Socket.IO
+- React Native (Expo) client with dark palette
+- Onboarding (first run only): set name and photo; editable later
+- Past chats list with peer name/photo, last message, and timestamp
+- On-device message persistence via Expo SQLite
 
-## Setup and Installation
+## Project Structure
+- `client/` – Expo app (React Native)
+- `server/` – Node/Express/Socket.IO server
 
-1. Install dependencies:
-   ```bash
-   bun install
-   ```
-
-2. Required environment variables:
-   - `JWT_SECRET`: Secret key for JWT signing
-   - `SENDGRID_KEY`: API key for SendGrid email service
-
-3. Start the development server:
-   ```bash
-   bun run dev
-   ```
-
-4. For production:
-   ```bash
-   bun run pro
-   ```
-
-## API Endpoints
-
-### Authentication
-
-#### Sign Up
-- **Endpoint**: `POST /signup`
-- **Body**: `{ name: string, email: string, password: string }`
-- **Response**: `{ message: "success" }` or error message
-
-#### Sign In
-- **Endpoint**: `POST /signin`
-- **Body**: `{ email: string, password: string }`
-- **Response**: `{ token: string, name: string, image: string }` or error message
-
-#### Verify JWT
-- **Endpoint**: `POST /verify-jwt`
-- **Body**: `{ token: string }`
-- **Response**: JWT payload or "unauthorized"
-
-#### Password Reset Flow
-1. **Request Reset**:
-   - **Endpoint**: `POST /reset-pass`
-   - **Body**: `{ email: string }`
-   - **Response**: "check your email" or error message
-   - Sends a verification code to the user's email
-
-2. **Verify Code**:
-   - **Endpoint**: `POST /verify-code`
-   - **Body**: `{ code: string, email: string }`
-   - **Response**: "success" or error message
-
-3. **Reset Password**:
-   - **Endpoint**: `POST /resetpass`
-   - **Body**: `{ pass: string, email: string, code: string }`
-   - **Response**: "password reset successfully" or error message
-
-#### Profile Management
-
-1. **Save Profile**:
-   - **Endpoint**: `POST /saveprofile`
-   - **Body**: `{ token: string, name: string, email: string, imageuri: string }`
-   - **Response**: "success" or error message
-
-2. **Delete Photo**:
-   - **Endpoint**: `POST /deletephoto`
-   - **Body**: `{ token: string, email: string }`
-   - **Response**: "success" or error message
-
-3. **Get User Info**:
-   - **Endpoint**: `POST /getNI`
-   - **Body**: `{ email: string }`
-   - **Response**: `{ name: string, image: string }`
-
-### WebSocket
-
-#### Chat WebSocket
-- **Endpoint**: `ws://<server>/chat`
-- **Functionality**:
-  - Automatically pairs users for chatting
-  - Creates chat rooms
-  - Handles message sending between users
-  - Supports text messages and image sharing
-  - Handles disconnection
-
-#### WebSocket Message Format
-```json
-{
-  "content": "{...}" // JSON stringified content with these possible properties:
-  // For initial pairing: 
-  // Assigned automatically when connection is established
-
-  // For messaging:
-  // { "message": "text message", "room": "roomId" }
-  
-  // For sharing user name:
-  // { "name": "username", "room": "roomId" }
-  
-  // For sharing images:
-  // { "image": "imageData", "room": "roomId" }
-  
-  // For disconnecting:
-  // { "disconnect": "true", "room": "roomId" }
-}
+## Server Setup
+```bash
+cd server
+npm install
+npm run dev
 ```
+- Default port: 4000
+- Key events: `paired`, `name`, `message`, `image`, `partner_disconnected`
+- Pairing: FIFO queue; entries expire after 60s of inactivity; disconnects clean up queue and notify partners
 
-## Database Schema
+## Client Setup
+```bash
+cd client
+npm install
+npm start
+```
+- Use Expo Go to scan the QR code.
+- First launch shows onboarding to set name/photo (stored in AsyncStorage).
+- Messages are stored in SQLite on device.
 
-The server uses SQLite with the following table structure:
+## Connect Your Phone
+1. Ensure phone and computer are on the same Wi‑Fi (or choose Expo “tunnel”).
+2. Find LAN IP (Windows PowerShell):
+```powershell
+ipconfig | findstr /i "IPv4"
+```
+3. Configure the client to connect to `http://YOUR_LAN_IP:4000` if using Socket.IO.
 
-### Users Table
-- `name`: User's display name
-- `email`: User's email (unique identifier)
-- `password`: Hashed password
-- `image`: Profile image (optional)
-- `resetCode`: Code for password reset
+## Client Local DB
+- `messages(id, room, sender, content, isImage, createdAt)`
+- `rooms(room PRIMARY KEY, peerName, peerImage, updatedAt)`
 
-## Security Features
+## Theming
+- Dark colors in `client/theme.js`
+  - Backgrounds: `#121212`, `#1E1E1E`, `#242424`, `#2C2C2C`
+  - Your bubbles: blue accents (e.g., `#3B82F6`)
+  - Other bubbles: neutral grays (e.g., `#2C2C2E`)
+  - Text: primary `#EDEDED`, secondary `#A1A1AA`
 
-- Password hashing using Bun's built-in password API
-- JWT authentication with expiration (2 days)
-- Email verification for password reset
-- CORS support
+## Git Tips
+- `.gitignore` in both `client/` and `server/` excludes `node_modules/` and build artifacts.
 
-## WebSocket Room Management
-
-- Unpaired users are stored until another user connects
-- When two users connect, they are subscribed to a shared room
-- Communication occurs via room publications
-- Disconnection properly handles room unsubscription
+## License
+MIT
